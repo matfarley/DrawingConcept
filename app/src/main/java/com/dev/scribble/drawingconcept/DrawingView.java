@@ -120,10 +120,15 @@ public class DrawingView extends View{
 
     //set erase true or false
     public void eraseLast(){
-        drawPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        Path path = pathStack.pop();
-        drawCanvas.drawPath(path, drawPaint);
-        drawPaint.setXfermode(null);
+        if(!pathStack.isEmpty()){
+            drawPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+            Path path = pathStack.pop();
+            drawCanvas.drawPath(path, drawPaint);
+            drawPaint.setXfermode(null);
+        }
     }
+
+    //TODO: get bitmap
+    //TODO: fix undo.  Get rid of outline.
 
 }
