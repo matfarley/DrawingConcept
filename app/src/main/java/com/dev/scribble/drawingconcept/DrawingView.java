@@ -21,11 +21,16 @@ import java.util.Stack;
  */
 public class DrawingView extends View{
 
+    private static final int ERASE_STROKE_PADDING = 2;
+
     private Path drawPath;
     private Paint drawPaint;
     private Paint canvasPaint;
     private Canvas drawCanvas;
     private Bitmap canvasBitmap;
+
+    private int eraseStrokeWidth;
+    private int drawStrokeWidth;
 
     // Stack of drawing paths for undo.
     Stack<Path> pathStack;
@@ -55,19 +60,21 @@ public class DrawingView extends View{
 
     private void init(){
         //prepare for drawing and setup paint stroke properties
+        drawStrokeWidth = getResources().getInteger(R.integer.stroke_width);
+        eraseStrokeWidth = drawStrokeWidth + ERASE_STROKE_PADDING;
+
         drawPath = new Path();
         drawPaint = new Paint();
-        drawPaint.setColor(getResources().getColor(R.color.drawingColor));
+        drawPaint.setColor(getResources().getColor(R.color.drawing_color));
         drawPaint.setAntiAlias(true);
-        drawPaint.setStrokeWidth(getResources().getInteger(R.integer.brush_size));
+        drawPaint.setStrokeWidth(drawStrokeWidth);
         drawPaint.setStyle(Paint.Style.STROKE);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
         canvasPaint = new Paint(Paint.DITHER_FLAG);
+        canvasPaint.setColor(getResources().getColor(R.color.canvas_color));
 
         pathStack = new Stack<>();
-
-
     }
 
     //size assigned to view
@@ -122,9 +129,12 @@ public class DrawingView extends View{
     public void eraseLast(){
         if(!pathStack.isEmpty()){
             drawPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+            drawPaint.setStrokeWidth(eraseStrokeWidth);
             Path path = pathStack.pop();
             drawCanvas.drawPath(path, drawPaint);
+            drawPaint.setStrokeWidth(drawStrokeWidth);  // Do I need to do this if I call invalidate?
             drawPaint.setXfermode(null);
+            invalidate();
         }
     }
 

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="drawingColor">#000</color>
+    <color name="drawing_color">#000</color>
+    <color name="canvas_color">#ff00</color>
+
 </resources>
