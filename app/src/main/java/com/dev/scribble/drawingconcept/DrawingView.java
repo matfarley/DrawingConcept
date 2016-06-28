@@ -12,7 +12,6 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 
 import java.util.Stack;
 
@@ -25,6 +24,7 @@ public class DrawingView extends View{
 
     private Path drawPath;
     private Paint drawPaint;
+    private Paint erasePaint;
     private Paint canvasPaint;
     private Canvas drawCanvas;
     private Bitmap canvasBitmap;
@@ -33,7 +33,7 @@ public class DrawingView extends View{
     private int drawStrokeWidth;
 
     // Stack of drawing paths for undo.
-    Stack<Path> pathStack;
+    Stack<Path> pathUndoStack;
 
     //
 
@@ -71,10 +71,17 @@ public class DrawingView extends View{
         drawPaint.setStyle(Paint.Style.STROKE);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
+
+        erasePaint = new Paint(drawPaint);
+        erasePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        erasePaint.setStrokeWidth(eraseStrokeWidth);
+
         canvasPaint = new Paint(Paint.DITHER_FLAG);
+
+        // TODO: find out why this isn't respected.
         canvasPaint.setColor(getResources().getColor(R.color.canvas_color));
 
-        pathStack = new Stack<>();
+        pathUndoStack = new Stack<>();
     }
 
     //size assigned to view
@@ -108,37 +115,40 @@ public class DrawingView extends View{
             case MotionEvent.ACTION_UP:
                 drawPath.lineTo(touchX, touchY);
                 drawCanvas.drawPath(drawPath, drawPaint);
-                pathStack.add(new Path(drawPath));
+                pathUndoStack.add(new Path(drawPath));
                 drawPath.reset();
                 break;
             default:
                 return false;
         }
-        //redraw
         invalidate();
         return true;
     }
 
     //start new drawing
+    // TODO: does this work?
     public void startNew(){
         drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         invalidate();
     }
 
-    //set erase true or false
+    // TODO: Move Drawing, Erasing and Bitmap exporting to a seperate class.
+
     public void eraseLast(){
-        if(!pathStack.isEmpty()){
-            drawPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-            drawPaint.setStrokeWidth(eraseStrokeWidth);
-            Path path = pathStack.pop();
-            drawCanvas.drawPath(path, drawPaint);
-            drawPaint.setStrokeWidth(drawStrokeWidth);  // Do I need to do this if I call invalidate?
-            drawPaint.setXfermode(null);
-            invalidate();
+        if(!pathUndoStack.isEmpty()){
+            Path path = pathUndoStack.pop();
+            drawCanvas.drawPath(path, erasePaint);
+
+            // Make sure that the undo doesn't cut the line of a previous layer
+            for(Path pathFromStack : pathUndoStack){
+                drawCanvas.drawPath(pathFromStack, drawPaint);
+            }
         }
+        invalidate();
     }
 
     //TODO: get bitmap
-    //TODO: fix undo.  Get rid of outline.
-
+    public Bitmap getDrawingBitmap(){
+        return null;
+    }
 }
