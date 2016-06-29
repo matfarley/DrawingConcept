@@ -29,6 +29,7 @@ public class DrawingView extends View{
     private Canvas drawCanvas;
     private Bitmap canvasBitmap;
 
+    private int canvasBackgroundColor;
     private int eraseStrokeWidth;
     private int drawStrokeWidth;
 
@@ -62,6 +63,7 @@ public class DrawingView extends View{
         //prepare for drawing and setup paint stroke properties
         drawStrokeWidth = getResources().getInteger(R.integer.stroke_width);
         eraseStrokeWidth = drawStrokeWidth + ERASE_STROKE_PADDING;
+        canvasBackgroundColor = (getResources().getColor(R.color.canvas_color));
 
         drawPath = new Path();
         drawPaint = new Paint();
@@ -78,9 +80,6 @@ public class DrawingView extends View{
 
         canvasPaint = new Paint(Paint.DITHER_FLAG);
 
-        // TODO: find out why this isn't respected.
-        canvasPaint.setColor(getResources().getColor(R.color.canvas_color));
-
         pathUndoStack = new Stack<>();
     }
 
@@ -95,6 +94,8 @@ public class DrawingView extends View{
     //draw the view - will be called after touch event
     @Override
     protected void onDraw(Canvas canvas) {
+        // Need to draw the color first or else the erasing process will leave transparent strokes.
+        canvas.drawColor(canvasBackgroundColor);
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         canvas.drawPath(drawPath, drawPaint);
     }
@@ -125,20 +126,6 @@ public class DrawingView extends View{
         return true;
     }
 
-    private void erasePath(Canvas canvas,
-                           Path pathToErase,
-                           Paint erasePaint){
-        canvas.drawPath(pathToErase, erasePaint);
-    }
-
-    private void drawPathStack(Canvas canvas,
-                           Stack<Path> pathStack,
-                           Paint paint){
-        for(Path pathFromStack : pathStack){
-            canvas.drawPath(pathFromStack, paint);
-        }
-    }
-
     //start new drawing
     // TODO: does this work?
     public void startNew(){
@@ -151,10 +138,10 @@ public class DrawingView extends View{
     public void eraseLast(){
         if(!pathUndoStack.isEmpty()){
             Path path = pathUndoStack.pop();
-            erasePath(drawCanvas, path, erasePaint);
+            DrawingUtils.erasePath(drawCanvas, path, erasePaint);
 
             // Redraw remaining path's, to avoid a line being taken out of overlapping paths.
-            drawPathStack(drawCanvas, pathUndoStack, drawPaint);
+            DrawingUtils.drawPathStack(drawCanvas, pathUndoStack, drawPaint);
         }
         invalidate();
     }
