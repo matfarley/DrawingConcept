@@ -125,6 +125,20 @@ public class DrawingView extends View{
         return true;
     }
 
+    private void erasePath(Canvas canvas,
+                           Path pathToErase,
+                           Paint erasePaint){
+        canvas.drawPath(pathToErase, erasePaint);
+    }
+
+    private void drawPathStack(Canvas canvas,
+                           Stack<Path> pathStack,
+                           Paint paint){
+        for(Path pathFromStack : pathStack){
+            canvas.drawPath(pathFromStack, paint);
+        }
+    }
+
     //start new drawing
     // TODO: does this work?
     public void startNew(){
@@ -137,12 +151,10 @@ public class DrawingView extends View{
     public void eraseLast(){
         if(!pathUndoStack.isEmpty()){
             Path path = pathUndoStack.pop();
-            drawCanvas.drawPath(path, erasePaint);
+            erasePath(drawCanvas, path, erasePaint);
 
-            // Make sure that the undo doesn't cut the line of a previous layer
-            for(Path pathFromStack : pathUndoStack){
-                drawCanvas.drawPath(pathFromStack, drawPaint);
-            }
+            // Redraw remaining path's, to avoid a line being taken out of overlapping paths.
+            drawPathStack(drawCanvas, pathUndoStack, drawPaint);
         }
         invalidate();
     }
